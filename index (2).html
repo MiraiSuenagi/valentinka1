@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Валентинка 💖</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #ff758c, #ff7eb3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .card {
+      background: white;
+      padding: 40px 60px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      font-size: 32px;
+      color: #ff4d6d;
+      line-height: 1.2;
+    }
+
+    .btns {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 14px 28px;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    #yes {
+      background: #ff4d6d;
+      color: white;
+      transition: transform .15s ease;
+    }
+    #yes:hover { transform: scale(1.06); }
+
+    /* Важно: кнопка "Нет" живёт как fixed-объект поверх всего */
+    #no {
+      position: fixed;
+      left: 0;
+      top: 0;
+      background: #e9e9e9;
+      color: #333;
+      z-index: 9999;
+      transition: left .10s linear, top .10s linear;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <h1>Мадина, ты будешь моей валентинкой? 💖</h1>
+    <div class="btns">
+      <button id="yes">Да 💘</button>
+      <!-- "Нет" тут не держим, она будет fixed -->
+    </div>
+  </div>
+
+  <button id="no">Нет 😅</button>
+
+  <script>
+    const noBtn = document.getElementById('no');
+    const card = document.getElementById('card');
+    const yesBtn = document.getElementById('yes');
+
+    const padding = 12;      // отступ от краёв экрана
+    const danger = 140;      // радиус "опасной зоны" около курсора
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    // Ставим кнопку так, чтобы (cx, cy) был ЦЕНТРОМ кнопки
+    function placeNoAtCenter(cx, cy) {
+      const r = noBtn.getBoundingClientRect();
+      const left = clamp(cx - r.width / 2, padding, window.innerWidth - r.width - padding);
+      const top  = clamp(cy - r.height / 2, padding, window.innerHeight - r.height - padding);
+      noBtn.style.left = left + 'px';
+      noBtn.style.top  = top + 'px';
+    }
+
+    // Изначально ставим "Нет" рядом с карточкой (справа от неё)
+    function placeNoInitially() {
+      const cr = card.getBoundingClientRect();
+      const targetX = cr.right + 110;                 // чуть правее карточки
+      const targetY = cr.top + cr.height * 0.62;      // примерно на уровне кнопок
+      placeNoAtCenter(targetX, targetY);
+    }
+
+    // Убегаем от курсора
+    function runAwayFromMouse(mx, my) {
+      const r = noBtn.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+
+      const dx = cx - mx;
+      const dy = cy - my;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist >= danger) return;
+
+      // направление "от курсора"
+      const ux = dx / (dist || 1);
+      const uy = dy / (dist || 1);
+
+      // чем ближе курсор — тем сильнее прыжок
+      const step = 70 + (danger - dist) * 1.2;
+
+      let nx = cx + ux * step;
+      let ny = cy + uy * step;
+
+      // если вдруг курсор почти в центре и вектор слабый — случайный пинок
+      if (!isFinite(nx) || !isFinite(ny)) {
+        nx = cx + (Math.random() - 0.5) * 300;
+        ny = cy + (Math.random() - 0.5) * 300;
+      }
+
+      placeNoAtCenter(nx, ny);
+    }
+
+    // Чтобы не "залипала" в углу при частом наведении:
+    // реагируем не только на enter, а на приближение мыши вообще
+    document.addEventListener('mousemove', (e) => runAwayFromMouse(e.clientX, e.clientY));
+
+    // На всякий случай: наводим прямо на кнопку — тоже убегает
+    noBtn.addEventListener('mouseenter', (e) => runAwayFromMouse(e.clientX, e.clientY));
+
+    // Инициализация после того, как браузер узнает размеры
+    window.addEventListener('load', placeNoInitially);
+    window.addEventListener('resize', () => {
+      // если экран изменился — держим кнопку внутри
+      const r = noBtn.getBoundingClientRect();
+      placeNoAtCenter(r.left + r.width/2, r.top + r.height/2);
+    });
+
+    yesBtn.addEventListener('click', () => {
+      document.body.innerHTML = `
+        <div style="
+          height:100vh;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:linear-gradient(135deg, #ff758c, #ff7eb3);
+          color:white;
+          font-size:36px;
+          text-align:center;
+          padding:20px;
+          font-family:Arial,sans-serif;
+        ">
+          💖 Урааа! 💖<br><br>
+          Ты — моя валентинка ❤️
+        </div>
+      `;
+    });
+  </script>
+
+</body>
+</html>
